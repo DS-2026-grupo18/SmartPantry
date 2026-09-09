@@ -1,0 +1,14 @@
+## C# / Visual Studio
+**/bin/
+**/obj/
+**/.vs/
+*.user
+*.suo
+*.mdf
+*.ldf
+
+## Node / Angular / ABP
+**/node_modules/
+**/.angular/
+**/dist/
+*.log
