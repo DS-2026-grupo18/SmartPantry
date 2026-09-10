@@ -104,4 +104,4 @@ Comandos para compilar el frontend y ejecutar las pruebas en modo headless:
 cd angular
 yarn build
 yarn test --watch=false --browsers=ChromeHeadless
-```
+
