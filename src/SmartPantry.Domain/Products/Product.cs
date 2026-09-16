@@ -18,8 +18,17 @@ public class Product : AuditedAggregateRoot<Guid>
     public Product(Guid id, string name, string brand)
         : base(id)
     {
-        SetName(name);
-        SetBrand(brand);
+        Update(name, brand);
+    }
+
+    public Product Update(string name, string brand)
+    {
+        Check.NotNullOrWhiteSpace(name, nameof(name), maxLength: ProductConsts.MaxNameLength);
+        Check.NotNullOrWhiteSpace(brand, nameof(brand), maxLength: ProductConsts.MaxBrandLength);
+
+        Name = name.Trim();
+        Brand = brand.Trim();
+        return this;
     }
 
     public Product SetName(string name)
