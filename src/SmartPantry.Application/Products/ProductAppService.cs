@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
@@ -14,11 +15,25 @@ public class ProductAppService :
         CreateUpdateProductDto>,
     IProductAppService
 {
-    public ProductAppService(IRepository<Product, Guid> repository)
+    // Variable privada donde guardamos el cliente externo inyectado
+    private readonly IExternalProductCatalogClient _externalCatalogClient;
+
+    // Constructor: recibe las herramientas necesarias (el repositorio interno y el cliente externo)
+    public ProductAppService(
+        IRepository<Product, Guid> repository,
+        IExternalProductCatalogClient externalCatalogClient)
         : base(repository)
     {
+        _externalCatalogClient = externalCatalogClient;
     }
 
+    // Método solicitado en TP07 para consultar la API externa
+    public async Task<ExternalProductDto?> GetByBarcodeAsync(GetProductByBarcodeDto input)
+    {
+        return await _externalCatalogClient.GetByBarcodeAsync(input.Barcode);
+    }
+
+    // Métodos de mapeo heredados del TP06 para la entidad interna
     protected override Product MapToEntity(CreateUpdateProductDto createInput)
     {
         return new Product(
@@ -33,4 +48,3 @@ public class ProductAppService :
         entity.Update(updateInput.Name, updateInput.Brand);
     }
 }
-
