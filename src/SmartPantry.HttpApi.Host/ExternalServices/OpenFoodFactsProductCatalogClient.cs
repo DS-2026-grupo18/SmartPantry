@@ -19,18 +19,47 @@ public class OpenFoodFactsProductCatalogClient : IExternalProductCatalogClient
 
     public async Task<ExternalProductDto?> GetByBarcodeAsync(string barcode)
     {
-        var response = await _httpClient.GetAsync($"api/v3/product/{barcode}.json");
+        HttpResponseMessage response;
+        try
+        {
+            var url = $"api/v3/product/{barcode}.json?fields=product_name,brands,image_front_url,ingredients_text,nutriscore_grade";
+            response = await _httpClient.GetAsync(url);
+        }
+        catch (HttpRequestException ex)
+        {
+            throw new ExternalCatalogUnavailableException("Error de conexión al consultar Open Food Facts.", ex);
+        }
+        catch (TaskCanceledException ex)
+        {
+            throw new ExternalCatalogUnavailableException("Tiempo de espera agotado al consultar Open Food Facts.", ex);
+        }
 
         if (response.StatusCode == HttpStatusCode.NotFound)
         {
             return null;
         }
 
-        response.EnsureSuccessStatusCode();
+        if (response.StatusCode == HttpStatusCode.TooManyRequests)
+        {
+            throw new ExternalCatalogRateLimitException();
+        }
 
-        var result = await response.Content.ReadFromJsonAsync<OpenFoodFactsApiResponse>();
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new ExternalCatalogUnavailableException($"Open Food Facts respondió con código {(int)response.StatusCode}.");
+        }
 
-        if (result == null || result.Status != 1 || result.Product == null)
+        OpenFoodFactsApiResponse? result;
+        try
+        {
+            result = await response.Content.ReadFromJsonAsync<OpenFoodFactsApiResponse>();
+        }
+        catch (Exception ex)
+        {
+            throw new ExternalCatalogUnavailableException("Error al procesar la respuesta de Open Food Facts.", ex);
+        }
+
+        if (result == null || result.Product == null || result.Result?.Id == "product_not_found" || result.Status == "failure")
         {
             return null;
         }
@@ -38,21 +67,30 @@ public class OpenFoodFactsProductCatalogClient : IExternalProductCatalogClient
         return new ExternalProductDto
         {
             Barcode = barcode,
-            Name = result.Product.ProductName,
-            Brand = result.Product.Brands,
-            ImageUrl = result.Product.ImageFrontUrl,
-            Ingredients = result.Product.IngredientsText,
-            NutriScore = result.Product.NutriscoreGrade?.ToUpper()
+            Name = string.IsNullOrWhiteSpace(result.Product.ProductName) ? null : result.Product.ProductName,
+            Brand = string.IsNullOrWhiteSpace(result.Product.Brands) ? null : result.Product.Brands,
+            ImageUrl = string.IsNullOrWhiteSpace(result.Product.ImageFrontUrl) ? null : result.Product.ImageFrontUrl,
+            Ingredients = string.IsNullOrWhiteSpace(result.Product.IngredientsText) ? null : result.Product.IngredientsText,
+            NutriScore = string.IsNullOrWhiteSpace(result.Product.NutriscoreGrade) ? null : result.Product.NutriscoreGrade.ToUpper()
         };
     }
 
     internal class OpenFoodFactsApiResponse
     {
         [JsonPropertyName("status")]
-        public int Status { get; set; }
+        public string? Status { get; set; }
+
+        [JsonPropertyName("result")]
+        public OpenFoodFactsResultInfo? Result { get; set; }
 
         [JsonPropertyName("product")]
         public OpenFoodFactsProductData? Product { get; set; }
+    }
+
+    internal class OpenFoodFactsResultInfo
+    {
+        [JsonPropertyName("id")]
+        public string? Id { get; set; }
     }
 
     internal class OpenFoodFactsProductData

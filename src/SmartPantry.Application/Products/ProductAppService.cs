@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Threading.Tasks;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
@@ -15,10 +15,8 @@ public class ProductAppService :
         CreateUpdateProductDto>,
     IProductAppService
 {
-    // Variable privada donde guardamos el cliente externo inyectado
     private readonly IExternalProductCatalogClient _externalCatalogClient;
 
-    // Constructor: recibe las herramientas necesarias (el repositorio interno y el cliente externo)
     public ProductAppService(
         IRepository<Product, Guid> repository,
         IExternalProductCatalogClient externalCatalogClient)
@@ -27,13 +25,32 @@ public class ProductAppService :
         _externalCatalogClient = externalCatalogClient;
     }
 
-    // Método solicitado en TP07 para consultar la API externa
-    public async Task<ExternalProductDto?> GetByBarcodeAsync(GetProductByBarcodeDto input)
+    public async Task<ExternalProductResultDto> GetByBarcodeAsync(GetProductByBarcodeDto input)
     {
-        return await _externalCatalogClient.GetByBarcodeAsync(input.Barcode);
+        try
+        {
+            var product = await _externalCatalogClient.GetByBarcodeAsync(input.Barcode);
+            if (product == null)
+            {
+                return ExternalProductResultDto.NotFound();
+            }
+
+            return ExternalProductResultDto.Found(product);
+        }
+        catch (ExternalCatalogRateLimitException ex)
+        {
+            return ExternalProductResultDto.RateLimit(ex.Message);
+        }
+        catch (ExternalCatalogUnavailableException ex)
+        {
+            return ExternalProductResultDto.ServiceUnavailable(ex.Message);
+        }
+        catch (Exception)
+        {
+            return ExternalProductResultDto.ServiceUnavailable();
+        }
     }
 
-    // Métodos de mapeo heredados del TP06 para la entidad interna
     protected override Product MapToEntity(CreateUpdateProductDto createInput)
     {
         return new Product(

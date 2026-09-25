@@ -131,7 +131,7 @@ public class SmartPantryHttpApiHostModule : AbpModule
         ConfigureCors(context, configuration);
 
         // Registro y configuración del cliente HTTP para Open Food Facts
-        context.Services.AddHttpClient("OpenFoodFacts", client =>
+        context.Services.AddHttpClient<IExternalProductCatalogClient, OpenFoodFactsProductCatalogClient>(client =>
         {
             client.BaseAddress = new Uri("https://world.openfoodfacts.org/");
             client.Timeout = TimeSpan.FromSeconds(10);
