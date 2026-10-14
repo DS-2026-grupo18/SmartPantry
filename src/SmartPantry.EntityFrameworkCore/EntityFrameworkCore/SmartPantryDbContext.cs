@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using SmartPantry.Authors;
 using SmartPantry.Books;
+using SmartPantry.Products;
 using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
 using Volo.Abp.BlobStoring.Database.EntityFrameworkCore;
 using Volo.Abp.Data;
@@ -28,6 +29,8 @@ public class SmartPantryDbContext :
     IIdentityDbContext
 {
     /* Add DbSet properties for your Aggregate Roots / Entities here. */
+
+    public DbSet<Product> Products { get; set; }
 
     public DbSet<Author> Authors { get; set; }
 
@@ -83,6 +86,15 @@ public class SmartPantryDbContext :
         builder.ConfigureOpenIddict();
         builder.ConfigureTenantManagement();
         builder.ConfigureBlobStoring();
+
+        builder.Entity<Product>(b =>
+        {
+            b.ToTable(SmartPantryConsts.DbTablePrefix + "Products",
+                SmartPantryConsts.DbSchema);
+            b.ConfigureByConvention(); //auto configure for the base class props
+            b.Property(x => x.Name).IsRequired().HasMaxLength(ProductConsts.MaxNameLength);
+            b.Property(x => x.Brand).IsRequired().HasMaxLength(ProductConsts.MaxBrandLength);
+        });
 
         builder.Entity<Author>(b =>
         {

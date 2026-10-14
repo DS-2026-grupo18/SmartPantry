@@ -39,6 +39,8 @@ using Volo.Abp.OpenIddict;
 using Volo.Abp.Swashbuckle;
 using Volo.Abp.Studio.Client.AspNetCore;
 using Volo.Abp.Security.Claims;
+using SmartPantry.Products;
+using SmartPantry.ExternalServices;
 
 namespace SmartPantry;
 
@@ -91,19 +93,19 @@ public class SmartPantryHttpApiHostModule : AbpModule
         var configuration = context.Services.GetConfiguration();
         var hostingEnvironment = context.Services.GetHostingEnvironment();
 
-        if (!configuration.GetValue<bool>("App:DisablePII"))
+        if (configuration.GetValue<bool>("App:DisablePII", false))
         {
             Microsoft.IdentityModel.Logging.IdentityModelEventSource.ShowPII = true;
             Microsoft.IdentityModel.Logging.IdentityModelEventSource.LogCompleteSecurityArtifact = true;
         }
 
-        if (!configuration.GetValue<bool>("AuthServer:RequireHttpsMetadata"))
+        if (configuration.GetValue<bool>("AuthServer:RequireHttpsMetadata", false))
         {
             Configure<OpenIddictServerAspNetCoreOptions>(options =>
             {
                 options.DisableTransportSecurityRequirement = true;
             });
-            
+
             Configure<ForwardedHeadersOptions>(options =>
             {
                 options.ForwardedHeaders = ForwardedHeaders.XForwardedProto;
@@ -127,6 +129,14 @@ public class SmartPantryHttpApiHostModule : AbpModule
         ConfigureSwagger(context, configuration);
         ConfigureVirtualFileSystem(context);
         ConfigureCors(context, configuration);
+
+        // Registro y configuración del cliente HTTP para Open Food Facts
+        context.Services.AddHttpClient<IExternalProductCatalogClient, OpenFoodFactsProductCatalogClient>(client =>
+        {
+            client.BaseAddress = new Uri("https://world.openfoodfacts.org/");
+            client.Timeout = TimeSpan.FromSeconds(10);
+            client.DefaultRequestHeaders.Add("User-Agent", "SmartPantry - UTN FRCU - Grupo18 (florenciabogado20@gmail.com)");
+        });
     }
 
     private void ConfigureStudio(IHostEnvironment hostingEnvironment)
@@ -215,8 +225,8 @@ public class SmartPantryHttpApiHostModule : AbpModule
     {
         context.Services.AddAbpSwaggerGenWithOidc(
             configuration["AuthServer:Authority"]!,
-            ["SmartPantry"],
-            [AbpSwaggerOidcFlows.AuthorizationCode],
+            new[] { "SmartPantry" },
+            new[] { AbpSwaggerOidcFlows.AuthorizationCode },
             null,
             options =>
             {
