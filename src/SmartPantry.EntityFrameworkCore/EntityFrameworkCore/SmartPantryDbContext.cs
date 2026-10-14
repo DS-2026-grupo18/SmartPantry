@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Volo.Abp.AuditLogging.EntityFrameworkCore;
 using SmartPantry.Authors;
 using SmartPantry.Books;
+using SmartPantry.Pantry;
 using SmartPantry.Products;
 using Volo.Abp.BackgroundJobs.EntityFrameworkCore;
 using Volo.Abp.BlobStoring.Database.EntityFrameworkCore;
@@ -31,6 +32,10 @@ public class SmartPantryDbContext :
     /* Add DbSet properties for your Aggregate Roots / Entities here. */
 
     public DbSet<Product> Products { get; set; }
+
+    public DbSet<PantryItem> PantryItems { get; set; }
+
+    public DbSet<ExpirationWarning> ExpirationWarnings { get; set; }
 
     public DbSet<Author> Authors { get; set; }
 
@@ -114,13 +119,31 @@ public class SmartPantryDbContext :
             b.HasOne<Author>().WithMany().HasForeignKey(x => x.AuthorId).IsRequired();
         });
 
-        /* Configure your own tables/entities inside here */
+        builder.Entity<PantryItem>(b =>
+        {
+            b.ToTable(SmartPantryConsts.DbTablePrefix + "PantryItems",
+                SmartPantryConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.UserId).IsRequired();
+            b.Property(x => x.ProductId).IsRequired();
+            b.Property(x => x.Status).IsRequired();
+            b.Property(x => x.ExpirationDate).IsRequired(false);
+            b.HasIndex(x => x.UserId);
+        });
 
-        //builder.Entity<YourEntity>(b =>
-        //{
-        //    b.ToTable(SmartPantryConsts.DbTablePrefix + "YourEntities", SmartPantryConsts.DbSchema);
-        //    b.ConfigureByConvention(); //auto configure for the base class props
-        //    //...
-        //});
+        builder.Entity<ExpirationWarning>(b =>
+        {
+            b.ToTable(SmartPantryConsts.DbTablePrefix + "ExpirationWarnings",
+                SmartPantryConsts.DbSchema);
+            b.ConfigureByConvention();
+            b.Property(x => x.PantryItemId).IsRequired();
+            b.Property(x => x.UserId).IsRequired();
+            b.Property(x => x.WarningType).IsRequired();
+            b.Property(x => x.ExpirationDate).IsRequired(false);
+            b.Property(x => x.IsActive).IsRequired();
+            b.Property(x => x.Message).IsRequired().HasMaxLength(PantryConsts.MaxWarningMessageLength);
+            b.HasIndex(x => new { x.PantryItemId, x.WarningType }).IsUnique();
+            b.HasIndex(x => x.UserId);
+        });
     }
 }
