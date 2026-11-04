@@ -1,11 +1,13 @@
-﻿using System;
+using System;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Volo.Abp.Application.Dtos;
 using Volo.Abp.Application.Services;
 using Volo.Abp.Domain.Repositories;
 
 namespace SmartPantry.Products;
 
+[Authorize]
 public class ProductAppService :
     CrudAppService<
         Product,
