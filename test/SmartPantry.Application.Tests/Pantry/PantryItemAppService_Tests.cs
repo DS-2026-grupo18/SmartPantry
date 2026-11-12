@@ -9,6 +9,7 @@ using Volo.Abp.Domain.Entities;
 using Volo.Abp.Domain.Repositories;
 using Volo.Abp.Users;
 using Xunit;
+using Volo.Abp.DependencyInjection;
 
 namespace SmartPantry.Pantry;
 
@@ -31,11 +32,13 @@ public class PantryItemAppService_Tests
         _currentUser.Id.Returns(_userId);
         _currentUser.IsAuthenticated.Returns(true);
 
-        _appService = new PantryItemAppService(_pantryRepo, _productRepo);
+        var lazyServiceProvider = Substitute.For<IAbpLazyServiceProvider>();
+        lazyServiceProvider.LazyGetRequiredService<ICurrentUser>().Returns(_currentUser);
 
-        // Inyectamos el CurrentUser falso al AppService
-        var prop = typeof(PantryItemAppService).GetProperty("CurrentUser");
-        prop?.SetValue(_appService, _currentUser);
+        _appService = new PantryItemAppService(_pantryRepo, _productRepo)
+        {
+            LazyServiceProvider = lazyServiceProvider
+        };
     }
 
     [Fact]
