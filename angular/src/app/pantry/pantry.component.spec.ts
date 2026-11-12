@@ -1,10 +1,13 @@
+import '@angular/compiler';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { of, throwError } from 'rxjs';
 import { FormBuilder } from '@angular/forms';
 import { Confirmation } from '@abp/ng.theme.shared';
 import { PantryComponent } from './pantry.component';
 import { PantryItemDto } from '../proxy/pantry/models';
-
+import { Injector, runInInjectionContext } from '@angular/core';
+import { ConfirmationService } from '@abp/ng.theme.shared';
+import { PantryItemService } from '../proxy/pantry/pantry-item.service';
 describe('PantryComponent', () => {
   let component: PantryComponent;
   let mockPantryService: any;
@@ -35,12 +38,16 @@ describe('PantryComponent', () => {
       warn: vi.fn().mockReturnValue(of(Confirmation.Status.confirm)),
     };
 
-    component = new PantryComponent();
-    (component as any).pantryService = mockPantryService;
-    (component as any).confirmationService = mockConfirmationService;
-    (component as any).fb = new FormBuilder();
+    const injector = Injector.create({
+      providers: [
+        { provide: PantryItemService, useValue: mockPantryService },
+        { provide: ConfirmationService, useValue: mockConfirmationService },
+        { provide: FormBuilder, useValue: new FormBuilder() },
+      ],
+    });
 
-    component.buildForm();
+    component = runInInjectionContext(injector, () => new PantryComponent());
+    component.crearFormulario();
   });
 
   it('debe iniciar y cargar la lista de items correctamente (estado con resultados)', () => {
