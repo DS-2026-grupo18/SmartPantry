@@ -14,6 +14,10 @@ public class PantryItem : AuditedAggregateRoot<Guid>
 
     public DateTime? ExpirationDate { get; private set; }
 
+    public decimal? Quantity { get; private set; }
+   
+    public string? Unit { get; private set; }
+
     protected PantryItem()
     {
         /* Constructor protegido para ORM (EF Core) */
@@ -58,6 +62,21 @@ public class PantryItem : AuditedAggregateRoot<Guid>
     {
         Check.NotNull(productId, nameof(productId));
         ProductId = productId;
+        return this;
+    }
+
+    public PantryItem SetQuantity(decimal? quantity)
+    {
+        if (quantity < 0)
+        {
+            throw new BusinessException("Pantry:QuantityCannotBeNegative");
+        }
+        Quantity = quantity;
+        return this;
+    }
+    public PantryItem SetUnit(string? unit)
+    {
+        Unit = unit?.Trim();
         return this;
     }
 }

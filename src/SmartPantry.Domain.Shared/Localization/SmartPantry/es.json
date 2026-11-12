@@ -38,5 +38,30 @@
     "SeeAllUsers": "Ver todos los usuarios",
     "TakePhoto": "Tomar foto",
     "ChoosePhoto": "Escoge una foto"
-  }
+  },
+  "Menu:MyPantry": "Mi Despensa",
+  "Pantry:MyPantry": "Mi Despensa",
+  "Pantry:Empty": "No tienes productos en tu despensa.",
+  "Pantry:Loading": "Cargando despensa...",
+  "Pantry:Error": "No se pudo cargar la despensa.",
+  "Pantry:Retry": "Reintentar",
+  "Pantry:ProductName": "Producto",
+  "Pantry:ExpirationDate": "Vencimiento",
+  "Pantry:Quantity": "Cantidad",
+  "Pantry:Unit": "Unidad",
+  "Pantry:Status": "Estado",
+  "Pantry:Actions": "Acciones",
+  "Pantry:Consumed": "Consumido",
+  "Pantry:Active": "Activo",
+  "Pantry:NotSpecified": "Sin especificar",
+  "Pantry:Edit": "Editar",
+  "Pantry:Consume": "Consumir",
+  "Pantry:Delete": "Eliminar",
+  "Pantry:DeleteConfirmation": "¿Seguro que deseas eliminar este ítem?",
+  "Pantry:AreYouSure": "¿Estás seguro?",
+  "Pantry:Save": "Guardar",
+  "Pantry:Cancel": "Cancelar",
+  "Pantry:QuantityCannotBeNegative": "La cantidad no puede ser negativa",
+  "Pantry:UnitTooLong": "La unidad es demasiado larga"
+  
 }

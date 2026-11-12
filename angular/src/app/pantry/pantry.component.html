@@ -1,0 +1,107 @@
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h4 class="card-title mb-0">{{ '::Pantry:MyPantry' | abpLocalization }}</h4>
+  </div>
+
+  <div class="card-body">
+    <!-- Estado 1: Cargando -->
+    <div *ngIf="isLoading" class="text-center py-5">
+      <div class="spinner-border text-primary" role="status"></div>
+      <p class="mt-2 text-muted">{{ '::Pantry:Loading' | abpLocalization }}</p>
+    </div>
+
+    <!-- Estado 2: Error -->
+    <div *ngIf="!isLoading && hasError" class="alert alert-danger d-flex justify-content-between align-items-center">
+      <span>{{ '::Pantry:Error' | abpLocalization }}</span>
+      <button class="btn btn-outline-danger btn-sm" (click)="cargarDatos()">
+        {{ '::Pantry:Retry' | abpLocalization }}
+      </button>
+    </div>
+
+    <!-- Estado 3: Lista Vacia -->
+    <div *ngIf="!isLoading && !hasError && items.length === 0" class="alert alert-info mb-0">
+      {{ '::Pantry:Empty' | abpLocalization }}
+    </div>
+
+    <!-- Estado 4: Resultados (Tabla) -->
+    <div *ngIf="!isLoading && !hasError && items.length > 0" class="table-responsive">
+      <table class="table table-striped align-middle mb-0">
+        <thead>
+          <tr>
+            <th>{{ '::Pantry:ProductName' | abpLocalization }}</th>
+            <th>{{ '::Pantry:Quantity' | abpLocalization }}</th>
+            <th>{{ '::Pantry:Unit' | abpLocalization }}</th>
+            <th>{{ '::Pantry:ExpirationDate' | abpLocalization }}</th>
+            <th>{{ '::Pantry:Status' | abpLocalization }}</th>
+            <th class="text-end">{{ '::Pantry:Actions' | abpLocalization }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let item of items">
+            <td class="fw-bold">{{ item.productName }}</td>
+            <td>{{ item.quantity !== null && item.quantity !== undefined ? item.quantity : ('::Pantry:NotSpecified' | abpLocalization) }}</td>
+            <td>{{ item.unit ? item.unit : ('::Pantry:NotSpecified' | abpLocalization) }}</td>
+            <td>{{ item.expirationDate ? (item.expirationDate | date:'mediumDate') : ('::Pantry:NotSpecified' | abpLocalization) }}</td>
+            <td>
+              <span class="badge" [ngClass]="item.status === 1 ? 'bg-success' : 'bg-secondary'">
+                {{ item.status === 1 ? ('::Pantry:Active' | abpLocalization) : ('::Pantry:Consumed' | abpLocalization) }}
+              </span>
+            </td>
+            <td class="text-end">
+              <button class="btn btn-sm btn-outline-primary me-1" (click)="abrirEditar(item)">
+                <i class="fa fa-pencil"></i> {{ '::Pantry:Edit' | abpLocalization }}
+              </button>
+              <button *ngIf="item.status === 1" class="btn btn-sm btn-outline-success me-1" (click)="consumir(item)">
+                <i class="fa fa-check"></i> {{ '::Pantry:Consume' | abpLocalization }}
+              </button>
+              <button class="btn btn-sm btn-outline-danger" (click)="eliminar(item)">
+                <i class="fa fa-trash"></i> {{ '::Pantry:Delete' | abpLocalization }}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Modal de Edicion -->
+<abp-modal [(visible)]="isModalOpen">
+  <ng-template #abpHeader>
+    <h3>{{ '::Pantry:Edit' | abpLocalization }}</h3>
+  </ng-template>
+
+  <ng-template #abpBody>
+    <form [formGroup]="form" (ngSubmit)="guardar()">
+      <div class="mb-3">
+        <label class="form-label">{{ '::Pantry:Quantity' | abpLocalization }}</label>
+        <input type="number" step="0.01" class="form-control" formControlName="quantity" />
+        <div *ngIf="form.get('quantity')?.errors?.['min']" class="text-danger small mt-1">
+          {{ '::Pantry:QuantityCannotBeNegative' | abpLocalization }}
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">{{ '::Pantry:Unit' | abpLocalization }}</label>
+        <input type="text" class="form-control" formControlName="unit" />
+        <div *ngIf="form.get('unit')?.errors?.['maxlength']" class="text-danger small mt-1">
+          {{ '::Pantry:UnitTooLong' | abpLocalization }}
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <label class="form-label">{{ '::Pantry:ExpirationDate' | abpLocalization }}</label>
+        <input type="date" class="form-control" formControlName="expirationDate" />
+      </div>
+    </form>
+  </ng-template>
+
+  <ng-template #abpFooter>
+    <button type="button" class="btn btn-secondary" abpClose>
+      {{ '::Pantry:Cancel' | abpLocalization }}
+    </button>
+    <abp-button iconClass="fa fa-check" [disabled]="form.invalid || isSaving" (click)="guardar()">
+      {{ '::Pantry:Save' | abpLocalization }}
+    </abp-button>
+  </ng-template>
+</abp-modal>
